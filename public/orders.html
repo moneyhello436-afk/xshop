@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>คำสั่งซื้อของฉัน | Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="header"></div>
+  <main class="container" style="padding:20px 15px;">
+    <h2 style="margin-bottom:16px;font-weight:500;">📦 คำสั่งซื้อของฉัน</h2>
+    <div id="ordersList"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div>
+  </main>
+  <div id="footer"></div>
+  <div id="authModalArea"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('header').innerHTML = getHeaderHTML();
+    document.getElementById('footer').innerHTML = getFooterHTML();
+    document.getElementById('authModalArea').innerHTML = getAuthModalHTML();
+    updateUserUI();
+
+    const statusLabels = {
+      pending: 'รอดำเนินการ', confirmed: 'ยืนยันแล้ว',
+      shipping: 'กำลังจัดส่ง', delivered: 'จัดส่งแล้ว', cancelled: 'ยกเลิก'
+    };
+
+    async function loadOrders() {
+      if (!state.user) { openAuthModal(); return; }
+      try {
+        const orders = await api('/orders');
+        if (!orders.length) {
+          document.getElementById('ordersList').innerHTML = `
+            <div class="empty-cart">
+              <i class="fas fa-box-open"></i>
+              <p style="font-size:18px;">ยังไม่มีคำสั่งซื้อ</p>
+              <a href="index.html" class="btn btn-primary" style="margin-top:16px;">เลือกซื้อสินค้า</a>
+            </div>`;
+          return;
+        }
+        document.getElementById('ordersList').innerHTML = orders.map(o => `
+          <div class="order-card">
+            <div class="order-card-header">
+              <span><i class="fas fa-store"></i> Shopee Mall</span>
+              <span class="order-status ${o.status}">${statusLabels[o.status] || o.status}</span>
+            </div>
+            <div class="order-card-body">
+              ${o.items.map(item => `
+                <div class="order-item-row">
+                  <img src="${item.image}" alt="">
+                  <div style="flex:1;">
+                    <div style="font-size:14px;">${item.name}</div>
+                    <div style="font-size:13px;color:var(--text-secondary);">x${item.quantity}</div>
+                  </div>
+                  <div>${formatPrice(item.price * item.quantity)}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="order-card-footer">
+              <span style="font-size:13px;color:var(--text-secondary);">${new Date(o.createdAt).toLocaleDateString('th-TH')}</span>
+              <span>ยอดรวม: <strong style="color:var(--shopee-orange);font-size:18px;">${formatPrice(o.grandTotal)}</strong></span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('ordersList').innerHTML = `<div class="loading"><p>${err.message}</p></div>`;
+      }
+    }
+
+    checkAuth().then(loadOrders);
+  </script>
+</body>
+</html>

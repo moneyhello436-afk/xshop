@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYC Verification | Admin Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    /* Loading Spinner */
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-container {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    /* Responsive Modal */
+    .modal {
+      max-width: 600px;
+      width: 100%;
+      margin: 20px;
+    }
+    
+    .filter-btn {
+      padding: 6px 16px;
+      margin-right: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--primary, #ee4d2d);
+      color: #fff;
+      border-color: var(--primary, #ee4d2d);
+    }
+    .filter-btn:hover:not(.active) {
+      background: #f5f5f5;
+    }
+    
+    .badge {
+      padding: 4px 8px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .badge-pending {
+      background: #ffc107;
+      color: #333;
+    }
+    .badge-approved {
+      background: #28a745;
+      color: #fff;
+    }
+    .badge-rejected {
+      background: #dc3545;
+      color: #fff;
+    }
+    
+    .kyc-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .kyc-detail-grid .full {
+      grid-column: 1 / -1;
+    }
+    .kyc-detail-grid label {
+      color: #999;
+      font-size: 12px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .kyc-detail-grid p {
+      margin: 0;
+      word-break: break-word;
+    }
+    
+    .action-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .btn-primary {
+      background: #007bff;
+      color: #fff;
+    }
+    .btn-success {
+      background: #28a745;
+      color: #fff;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .admin-table th {
+      background: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      border-bottom: 2px solid #dee2e6;
+    }
+    .admin-table td {
+      padding: 12px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .admin-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    .toast {
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      color: #fff;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .toast-success { background: #28a745; }
+    .toast-error { background: #dc3545; }
+    .toast-info { background: #17a2b8; }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      padding: 24px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #999;
+    }
+    .modal-close:hover {
+      color: #333;
+    }
+    .modal-header {
+      margin-bottom: 20px;
+    }
+    .modal-header h2 {
+      margin: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .kyc-detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .filter-btn {
+        margin-bottom: 8px;
+      }
+      .admin-table {
+        font-size: 12px;
+      }
+      .admin-table th,
+      .admin-table td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="admin-content">
+      <div id="topHeader"></div>
+      <div class="admin-main">
+        <div class="content-section">
+          <div class="section-header">
+            <h2>ยืนยัน KYC</h2>
+            <div id="filterStatus" role="tablist" aria-label="Filter KYC status">
+              <button class="filter-btn active" role="tab" aria-selected="true" onclick="filterByStatus('all', event)">ทั้งหมด</button>
+              <button class="filter-btn" role="tab" aria-selected="false" onclick="filterByStatus('pending', event)">รอตรวจสอบ</button>
+              <button class="filter-btn" role="tab" aria-selected="false" onclick="filterByStatus('approved', event)">อนุมัติ</button>
+              <button class="filter-btn" role="tab" aria-selected="false" onclick="filterByStatus('rejected', event)">ปฏิเสธ</button>
+            </div>
+          </div>
+          <div id="loadingIndicator" class="loading-container" style="display:none;">
+            <div class="loading-spinner"></div>
+            <p>กำลังโหลดข้อมูล...</p>
+          </div>
+          <div id="kycTableContainer" class="table-responsive">
+            <table class="admin-table" role="table" aria-label="KYC verification list">
+              <thead>
+                <tr>
+                  <th scope="col">ชื่อ</th>
+                  <th scope="col">อีเมล</th>
+                  <th scope="col">ประเภทเอกสาร</th>
+                  <th scope="col">เลขประจำตัว</th>
+                  <th scope="col">สถานะ</th>
+                  <th scope="col">วันที่สมัคร</th>
+                  <th scope="col">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="kycTable"></tbody>
+            </table>
+          </div>
+          <div id="emptyState" style="display:none; text-align:center; padding:40px; color:#999;">
+            <i class="fas fa-inbox" style="font-size:48px; margin-bottom:16px;"></i>
+            <p>ไม่พบข้อมูล KYC</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="kycDetailModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('kycDetailModal')" aria-label="ปิดหน้าต่าง">&times;</button>
+      <div class="modal-header">
+        <h2 id="modalTitle">รายละเอียด KYC</h2>
+      </div>
+      <div class="modal-body">
+        <div id="kycDetailContent"></div>
+        <div id="kycActions" class="action-buttons"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    (function() {
+      'use strict';
+      
+      // ===== Constants =====
+      const KYC_STATUS = {
+        PENDING: 'pending',
+        APPROVED: 'approved',
+        REJECTED: 'rejected'
+      };
+      
+      const STATUS_LABELS = {
+        [KYC_STATUS.PENDING]: 'รอตรวจสอบ',
+        [KYC_STATUS.APPROVED]: 'อนุมัติ',
+        [KYC_STATUS.REJECTED]: 'ปฏิเสธ'
+      };
+      
+      const ID_TYPE_LABELS = {
+        'national_id': 'บัตรประชาชน',
+        'passport': 'พาสปอร์ต',
+        'driving_license': 'ใบขับขี่'
+      };
+      
+      // ===== State =====
+      let allKyc = [];
+      let currentFilter = 'all';
+      let isLoading = false;
+      
+      // ===== DOM Elements =====
+      const elements = {
+        kycTable: document.getElementById('kycTable'),
+        loadingIndicator: document.getElementById('loadingIndicator'),
+        emptyState: document.getElementById('emptyState'),
+        toastContainer: document.getElementById('toastContainer'),
+        kycDetailContent: document.getElementById('kycDetailContent'),
+        kycActions: document.getElementById('kycActions'),
+        modal: document.getElementById('kycDetailModal')
+      };
+      
+      // ===== Authentication =====
+      function checkAuthentication() {
+        try {
+          if (!checkAdminAuth()) {
+            window.location.href = 'login.html';
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          window.location.href = 'login.html';
+          return false;
+        }
+      }
+      
+      if (!checkAuthentication()) {
+        throw new Error('Authentication failed');
+      }
+      
+      // ===== Render Helpers (XSS Safe) =====
+      function createSafeElement(tag, content, className = '') {
+        const el = document.createElement(tag);
+        if (content !== undefined && content !== null) {
+          el.textContent = String(content);
+        }
+        if (className) {
+          el.className = className;
+        }
+        return el;
+      }
+      
+      function createSafeHTML(html) {
+        const template = document.createElement('template');
+        template.innerHTML = html;
+        return template.content.cloneNode(true);
+      }
+      
+      function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+      
+      // ===== Toast System =====
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        elements.toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 300);
+          }
+        }, 3000);
+      }
+      
+      // ===== Modal System =====
+      function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+      
+      function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      // Close modal on backdrop click
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-overlay')) {
+          closeModal(e.target.id);
+        }
+      });
+      
+      // ===== Status Helpers =====
+      function getStatusLabel(status) {
+        return STATUS_LABELS[status] || status;
+      }
+      
+      function getIdTypeLabel(type) {
+        return ID_TYPE_LABELS[type] || type;
+      }
+      
+      // ===== KYC Table Rendering =====
+      function renderKycTable(data) {
+        const tbody = elements.kycTable;
+        tbody.innerHTML = '';
+        
+        if (!data || data.length === 0) {
+          elements.emptyState.style.display = 'block';
+          return;
+        }
+        
+        elements.emptyState.style.display = 'none';
+        
+        const fragment = document.createDocumentFragment();
+        
+        data.forEach(kyc => {
+          const row = document.createElement('tr');
+          
+          // Name
+          const nameCell = document.createElement('td');
+          nameCell.textContent = `${kyc.firstName || ''} ${kyc.lastName || ''}`.trim();
+          row.appendChild(nameCell);
+          
+          // Email
+          const emailCell = document.createElement('td');
+          emailCell.textContent = kyc.userEmail || '-';
+          row.appendChild(emailCell);
+          
+          // ID Type
+          const typeCell = document.createElement('td');
+          typeCell.textContent = getIdTypeLabel(kyc.idType);
+          row.appendChild(typeCell);
+          
+          // ID Number
+          const idCell = document.createElement('td');
+          idCell.textContent = kyc.idNumber || '-';
+          row.appendChild(idCell);
+          
+          // Status
+          const statusCell = document.createElement('td');
+          const statusBadge = document.createElement('span');
+          statusBadge.className = `badge badge-${kyc.status || 'pending'}`;
+          statusBadge.textContent = getStatusLabel(kyc.status);
+          statusCell.appendChild(statusBadge);
+          row.appendChild(statusCell);
+          
+          // Date
+          const dateCell = document.createElement('td');
+          try {
+            const date = new Date(kyc.createdAt);
+            dateCell.textContent = date.toLocaleDateString('th-TH');
+          } catch {
+            dateCell.textContent = '-';
+          }
+          row.appendChild(dateCell);
+          
+          // Actions
+          const actionCell = document.createElement('td');
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'btn btn-sm btn-primary';
+          viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+          viewBtn.setAttribute('aria-label', 'ดูรายละเอียด');
+          viewBtn.onclick = function() { viewKycDetail(kyc.userId); };
+          actionCell.appendChild(viewBtn);
+          
+          if (kyc.status === KYC_STATUS.PENDING) {
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'btn btn-sm btn-success';
+            approveBtn.innerHTML = '<i class="fas fa-check"></i>';
+            approveBtn.setAttribute('aria-label', 'อนุมัติ');
+            approveBtn.onclick = function() { approveKyc(kyc.userId); };
+            actionCell.appendChild(approveBtn);
+            
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'btn btn-sm btn-danger';
+            rejectBtn.innerHTML = '<i class="fas fa-times"></i>';
+            rejectBtn.setAttribute('aria-label', 'ปฏิเสธ');
+            rejectBtn.onclick = function() { showRejectForm(kyc.userId); };
+            actionCell.appendChild(rejectBtn);
+          }
+          
+          row.appendChild(actionCell);
+          fragment.appendChild(row);
+        });
+        
+        tbody.appendChild(fragment);
+      }
+      
+      // ===== KYC Detail Rendering (XSS Safe) =====
+      function renderKycDetail(kyc) {
+        if (!kyc) return;
+        
+        const container = elements.kycDetailContent;
+        container.innerHTML = '';
+        
+        const grid = document.createElement('div');
+        grid.className = 'kyc-detail-grid';
+        
+        const fields = [
+          { label: 'ชื่อ', value: `${kyc.firstName || ''} ${kyc.lastName || ''}`.trim() },
+          { label: 'ประเภทเอกสาร', value: getIdTypeLabel(kyc.idType) },
+          { label: 'เลขประจำตัว', value: kyc.idNumber || '-' },
+          { label: 'วันเกิด', value: kyc.dateOfBirth ? new Date(kyc.dateOfBirth).toLocaleDateString('th-TH') : '-' },
+          { label: 'ที่อยู่', value: kyc.address || '-', full: true },
+          { label: 'เมือง', value: kyc.city || '-' },
+          { label: 'จังหวัด', value: kyc.state || '-' },
+          { label: 'รหัสไปรษณีย์', value: kyc.zipCode || '-' },
+          { label: 'ประเทศ', value: kyc.country || '-' },
+          { label: 'สถานะ', value: getStatusLabel(kyc.status), badge: kyc.status },
+          { label: 'วันที่สมัคร', value: kyc.createdAt ? new Date(kyc.createdAt).toLocaleString('th-TH') : '-' }
+        ];
+        
+        if (kyc.approvedAt) {
+          fields.push({ label: 'อนุมัติโดย', value: kyc.approvedBy || '-' });
+        }
+        
+        if (kyc.rejectionReason) {
+          fields.push({ label: 'เหตุผลการปฏิเสธ', value: kyc.rejectionReason, full: true });
+        }
+        
+        fields.forEach(field => {
+          const div = document.createElement('div');
+          if (field.full) {
+            div.className = 'full';
+          }
+          
+          const label = document.createElement('label');
+          label.textContent = field.label;
+          div.appendChild(label);
+          
+          if (field.badge) {
+            const badge = document.createElement('span');
+            badge.className = `badge badge-${field.badge}`;
+            badge.textContent = field.value;
+            div.appendChild(badge);
+          } else {
+            const p = document.createElement('p');
+            p.textContent = field.value || '-';
+            div.appendChild(p);
+          }
+          
+          grid.appendChild(div);
+        });
+        
+        container.appendChild(grid);
+      }
+      
+      // ===== API Calls =====
+      async function loadKyc() {
+        if (isLoading) return;
+        
+        isLoading = true;
+        elements.loadingIndicator.style.display = 'block';
+        elements.kycTable.innerHTML = '';
+        
+        try {
+          allKyc = await api('/kyc/admin/list');
+          applyFilter(currentFilter);
+        } catch (err) {
+          showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message, 'error');
+          console.error('Load KYC error:', err);
+        } finally {
+          isLoading = false;
+          elements.loadingIndicator.style.display = 'none';
+        }
+      }
+      
+      async function approveKyc(userId) {
+        if (!userId) return;
+        if (!confirm('ยืนยันการอนุมัติ KYC?')) return;
+        
+        try {
+          const btn = document.querySelector(`[onclick*="approveKyc('${userId}')"]`);
+          if (btn) btn.disabled = true;
+          
+          await api(`/kyc/${userId}/approve`, { 
+            method: 'PUT', 
+            body: JSON.stringify({}),
+            headers: {
+              'X-CSRF-Token': getCsrfToken()
+            }
+          });
+          
+          showToast('อนุมัติ KYC สำเร็จ', 'success');
+          closeModal('kycDetailModal');
+          await loadKyc();
+        } catch (err) {
+          showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+          console.error('Approve KYC error:', err);
+        } finally {
+          const btn = document.querySelector(`[onclick*="approveKyc('${userId}')"]`);
+          if (btn) btn.disabled = false;
+        }
+      }
+      
+      async function rejectKyc(userId, reason) {
+        if (!userId || !reason) return;
+        
+        try {
+          await api(`/kyc/${userId}/reject`, { 
+            method: 'PUT', 
+            body: JSON.stringify({ reason }),
+            headers: {
+              'X-CSRF-Token': getCsrfToken()
+            }
+          });
+          
+          showToast('ปฏิเสธ KYC สำเร็จ', 'success');
+          closeModal('kycDetailModal');
+          await loadKyc();
+        } catch (err) {
+          showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+          console.error('Reject KYC error:', err);
+        }
+      }
+      
+      // ===== CSRF Token Helper =====
+      function getCsrfToken() {
+        // Get token from meta tag or cookie
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        return localStorage.getItem('csrfToken') || '';
+      }
+      
+      // ===== Filter Functions =====
+      function filterByStatus(status, event) {
+        currentFilter = status;
+        
+        // Update active tab
+        const buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => {
+          btn.classList.remove('active');
+          btn.setAttribute('aria-selected', 'false');
+        });
+        
+        if (event && event.currentTarget) {
+          event.currentTarget.classList.add('active');
+          event.currentTarget.setAttribute('aria-selected', 'true');
+        } else {
+          // Fallback if event not provided
+          buttons.forEach(btn => {
+            if (btn.textContent.trim() === getStatusLabel(status)) {
+              btn.classList.add('active');
+              btn.setAttribute('aria-selected', 'true');
+            }
+          });
+        }
+        
+        applyFilter(status);
+      }
+      
+      function applyFilter(status) {
+        const filtered = status === 'all' 
+          ? allKyc 
+          : allKyc.filter(k => k.status === status);
+        renderKycTable(filtered);
+      }
+      
+      // ===== View Detail =====
+      function viewKycDetail(userId) {
+        const kyc = allKyc.find(k => k.userId === userId);
+        if (!kyc) {
+          showToast('ไม่พบข้อมูล KYC', 'error');
+          return;
+        }
+        
+        renderKycDetail(kyc);
+        
+        // Render actions
+        const actionsContainer = elements.kycActions;
+        actionsContainer.innerHTML = '';
+        
+        if (kyc.status === KYC_STATUS.PENDING) {
+          const approveBtn = document.createElement('button');
+          approveBtn.className = 'btn btn-success';
+          approveBtn.innerHTML = '<i class="fas fa-check"></i> อนุมัติ';
+          approveBtn.onclick = function() { approveKyc(kyc.userId); };
+          actionsContainer.appendChild(approveBtn);
+          
+          const rejectBtn = document.createElement('button');
+          rejectBtn.className = 'btn btn-danger';
+          rejectBtn.innerHTML = '<i class="fas fa-times"></i> ปฏิเสธ';
+          rejectBtn.onclick = function() { showRejectForm(kyc.userId); };
+          actionsContainer.appendChild(rejectBtn);
+        }
+        
+        openModal('kycDetailModal');
+      }
+      
+      // ===== Reject Form =====
+      function showRejectForm(userId) {
+        const reason = prompt('กรุณาบอกเหตุผลการปฏิเสธ:');
+        if (reason === null) return; // User cancelled
+        
+        const trimmedReason = reason.trim();
+        if (!trimmedReason) {
+          showToast('กรุณาระบุเหตุผลการปฏิเสธ', 'error');
+          return;
+        }
+        
+        if (trimmedReason.length < 10) {
+          showToast('กรุณาระบุเหตุผลอย่างน้อย 10 ตัวอักษร', 'error');
+          return;
+        }
+        
+        rejectKyc(userId, trimmedReason);
+      }
+      
+      // ===== Initialize =====
+      function init() {
+        try {
+          document.getElementById('sidebar').innerHTML = getSidebarHTML('kyc');
+          document.getElementById('topHeader').innerHTML = getTopHeaderHTML('KYC Verification');
+          loadAdminUser();
+          loadKyc();
+        } catch (error) {
+          console.error('Initialization error:', error);
+          showToast('เกิดข้อผิดพลาดในการเริ่มต้นระบบ', 'error');
+        }
+      }
+      
+      // Expose functions to global scope
+      window.filterByStatus = filterByStatus;
+      window.viewKycDetail = viewKycDetail;
+      window.approveKyc = approveKyc;
+      window.showRejectForm = showRejectForm;
+      window.openModal = openModal;
+      window.closeModal = closeModal;
+      window.showToast = showToast;
+      
+      // Start
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+      
+    })();
+  </script>
+</body>
+</html>

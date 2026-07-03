@@ -1,0 +1,70 @@
+[
+  {
+    "id": "user1",
+    "username": "admin",
+    "email": "admin@shopee.com",
+    "password": "$2a$10$6kY2g04l9rWMp2h5dzbgJOGbEZVp1WvpOvzGfl664GjZLu4w3awn2",
+    "name": "Admin Shopee",
+    "role": "admin",
+    "phone": "0812345678",
+    "address": "123 Shopee Tower, Bangkok",
+    "wallet": {
+      "balance": 0,
+      "totalTopUp": 0,
+      "totalUsed": 0
+    },
+    "verified": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "user2",
+    "username": "demo",
+    "email": "demo@email.com",
+    "password": "$2a$10$HJ3MdC9LNK9HVwl81wW9vOUsmncaxSIhu3EyQgrXPg3CtaiE0I9X6",
+    "name": "Demo User",
+    "role": "customer",
+    "phone": "0898765432",
+    "address": "456 Sukhumvit Rd, Bangkok",
+    "wallet": {
+      "balance": 1000,
+      "totalTopUp": 1000,
+      "totalUsed": 0
+    },
+    "verified": true,
+    "createdAt": "2026-02-01T00:00:00.000Z"
+  },
+  {
+    "id": "55fb9901-589f-4bf2-9dfd-6103a33c08fa",
+    "username": "ไมค์ภิรมภร",
+    "email": "papa@gmail.com",
+    "password": "$2a$10$oaZBylgfL8Y0/7aX2woxnu3mIf3i7MNh9l583yFqIisjleRY5jmUW",
+    "name": "ไมค์ภิรนภร",
+    "role": "customer",
+    "phone": "087654321",
+    "address": "",
+    "wallet": {
+      "balance": 0,
+      "totalTopUp": 0,
+      "totalUsed": 0
+    },
+    "verified": true,
+    "createdAt": "2026-07-03T13:59:29.254Z"
+  },
+  {
+    "id": "890036a5-710d-44ba-b955-7d24d3ca289e",
+    "username": "ไม",
+    "email": "adddmin@gmail.com",
+    "password": "$2a$10$weAtm30LmHLddTbfOs9QauCnR4l/.Q9AD6sMRMl6SRNJyyhUQnRWm",
+    "name": "ไมทำอะไร",
+    "role": "customer",
+    "phone": "012345678",
+    "address": "",
+    "wallet": {
+      "balance": 0,
+      "totalTopUp": 0,
+      "totalUsed": 0
+    },
+    "verified": false,
+    "createdAt": "2026-07-03T15:25:59.101Z"
+  }
+]

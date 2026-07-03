@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management | Admin Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="admin-content">
+      <div id="topHeader"></div>
+      <div class="admin-main">
+        <div class="content-section">
+          <div class="section-header">
+            <h2>จัดการผู้ใช้</h2>
+            <input type="text" id="searchUser" placeholder="ค้นหา..." style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;width:200px;">
+          </div>
+          <div id="usersTableContainer" class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ชื่อ</th>
+                  <th>อีเมล</th>
+                  <th>เบอร์โทร</th>
+                  <th>ยอดเงิน</th>
+                  <th>KYC</th>
+                  <th>ตรวจสอบ</th>
+                  <th>วันสมัคร</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="userEditModal">
+    <div class="modal" style="width:500px;">
+      <button class="modal-close" onclick="closeModal('userEditModal')">&times;</button>
+      <div class="modal-header"><h2 id="editModalTitle">แก้ไขผู้ใช้</h2></div>
+      <div class="modal-body">
+        <form onsubmit="saveUserEdit(event)">
+          <input type="hidden" id="editUserId">
+          <div class="form-group">
+            <label>ชื่อ-นามสกุล</label>
+            <input type="text" id="editName" required>
+          </div>
+          <div class="form-group">
+            <label>เบอร์โทร</label>
+            <input type="tel" id="editPhone">
+          </div>
+          <div class="form-group">
+            <label>ที่อยู่</label>
+            <textarea id="editAddress" style="resize:vertical;min-height:60px;"></textarea>
+          </div>
+          <div class="form-group form-check">
+            <label><input type="checkbox" id="editVerified"> ตรวจสอบแล้ว</label>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:20px;">
+            <button type="submit" class="btn btn-primary">บันทึก</button>
+            <button type="button" class="btn btn-outline" onclick="closeModal('userEditModal')">ยกเลิก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top-up Modal -->
+  <div class="modal-overlay" id="topupModal">
+    <div class="modal" style="width:400px;">
+      <button class="modal-close" onclick="closeModal('topupModal')">&times;</button>
+      <div class="modal-header"><h2>เติมเงิน</h2></div>
+      <div class="modal-body">
+        <div id="topupUserInfo" style="margin-bottom:16px;padding:12px;background:#f5f5f5;border-radius:4px;"></div>
+        <form onsubmit="performTopup(event)">
+          <input type="hidden" id="topupUserId">
+          <div class="form-group">
+            <label>จำนวนเงิน (฿)</label>
+            <input type="number" id="topupAmount" required min="1" max="100000">
+          </div>
+          <div class="form-group">
+            <label>หมายเหตุ</label>
+            <input type="text" id="topupDescription" placeholder="เช่น แก้ไขข้อผิดพลาด">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">เติมเงิน</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refund Modal -->
+  <div class="modal-overlay" id="refundModal">
+    <div class="modal" style="width:400px;">
+      <button class="modal-close" onclick="closeModal('refundModal')">&times;</button>
+      <div class="modal-header"><h2>คืนเงิน</h2></div>
+      <div class="modal-body">
+        <div id="refundUserInfo" style="margin-bottom:16px;padding:12px;background:#f5f5f5;border-radius:4px;"></div>
+        <form onsubmit="performRefund(event)">
+          <input type="hidden" id="refundUserId">
+          <div class="form-group">
+            <label>จำนวนเงิน (฿)</label>
+            <input type="number" id="refundAmount" required min="1" max="100000">
+          </div>
+          <div class="form-group">
+            <label>เหตุผล</label>
+            <input type="text" id="refundReason" placeholder="เช่น คืนเงินสินค้า">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">คืนเงิน</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('users');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('User Management');
+    loadAdminUser();
+
+    let allUsers = [];
+
+    async function loadUsers() {
+      try {
+        allUsers = await api('/users');
+        allUsers.forEach(u => {
+          if (!u.wallet) u.wallet = { balance: 0, totalTopUp: 0, totalUsed: 0 };
+          if (!u.kycStatus) u.kycStatus = 'not_submitted';
+        });
+        renderUsersTable(allUsers);
+      } catch (err) {
+        showToast('Error loading users: ' + err.message, 'error');
+      }
+    }
+
+    function renderUsersTable(data) {
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = data.map(user => `
+        <tr>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.phone || '-'}</td>
+          <td><strong>฿${(user.wallet?.balance || 0).toLocaleString()}</strong></td>
+          <td><span class="badge badge-${user.kycStatus || 'not_submitted'}">${getKycStatusLabel(user.kycStatus)}</span></td>
+          <td><input type="checkbox" ${user.verified ? 'checked' : ''} onchange="toggleVerify('${user.id}', this.checked)"></td>
+          <td>${new Date(user.createdAt).toLocaleDateString('th-TH')}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="openEditModal('${user.id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm btn-success" onclick="openTopupModal('${user.id}')"><i class="fas fa-plus"></i></button>
+            <button class="btn btn-sm btn-warning" onclick="openRefundModal('${user.id}')"><i class="fas fa-undo"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function getKycStatusLabel(status) {
+      const labels = {
+        'pending': 'รอตรวจสอบ',
+        'approved': 'อนุมัติ',
+        'rejected': 'ปฏิเสธ',
+        'not_submitted': 'ยังไม่ส่ง',
+        'undefined': 'ยังไม่ส่ง'
+      };
+      return labels[status] || 'ยังไม่ส่ง';
+    }
+
+    function openEditModal(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+      
+      document.getElementById('editUserId').value = user.id;
+      document.getElementById('editName').value = user.name;
+      document.getElementById('editPhone').value = user.phone || '';
+      document.getElementById('editAddress').value = user.address || '';
+      document.getElementById('editVerified').checked = user.verified || false;
+      
+      openModal('userEditModal');
+    }
+
+    async function saveUserEdit(e) {
+      e.preventDefault();
+      const userId = document.getElementById('editUserId').value;
+      const body = {
+        name: document.getElementById('editName').value,
+        phone: document.getElementById('editPhone').value,
+        address: document.getElementById('editAddress').value,
+        verified: document.getElementById('editVerified').checked
+      };
+      
+      try {
+        await api(`/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(body) });
+        showToast('อัปเดตผู้ใช้สำเร็จ', 'success');
+        closeModal('userEditModal');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function toggleVerify(userId, verified) {
+      try {
+        await api(`/admin/users/${userId}`, { method: 'PUT', body: JSON.stringify({ verified }) });
+        showToast(verified ? 'ตรวจสอบแล้ว' : 'ยกเลิกการตรวจสอบ', 'success');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function openTopupModal(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+      
+      document.getElementById('topupUserId').value = user.id;
+      document.getElementById('topupUserInfo').innerHTML = `<strong>${user.name}</strong> (${user.email}) - ยอดเงินปัจจุบัน: <strong>฿${(user.wallet?.balance || 0).toLocaleString()}</strong>`;
+      openModal('topupModal');
+    }
+
+    async function performTopup(e) {
+      e.preventDefault();
+      const userId = document.getElementById('topupUserId').value;
+      const amount = parseFloat(document.getElementById('topupAmount').value);
+      const description = document.getElementById('topupDescription').value;
+      
+      try {
+        await api(`/admin/wallet/topup/${userId}`, { 
+          method: 'POST', 
+          body: JSON.stringify({ amount, description }) 
+        });
+        showToast('เติมเงินสำเร็จ', 'success');
+        closeModal('topupModal');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function openRefundModal(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+      
+      document.getElementById('refundUserId').value = user.id;
+      document.getElementById('refundUserInfo').innerHTML = `<strong>${user.name}</strong> (${user.email}) - ยอดเงินปัจจุบัน: <strong>฿${(user.wallet?.balance || 0).toLocaleString()}</strong>`;
+      openModal('refundModal');
+    }
+
+    async function performRefund(e) {
+      e.preventDefault();
+      const userId = document.getElementById('refundUserId').value;
+      const amount = parseFloat(document.getElementById('refundAmount').value);
+      const reason = document.getElementById('refundReason').value;
+      
+      try {
+        await api(`/admin/wallet/refund/${userId}`, { 
+          method: 'POST', 
+          body: JSON.stringify({ amount, reason }) 
+        });
+        showToast('คืนเงินสำเร็จ', 'success');
+        closeModal('refundModal');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('ยืนยันการลบผู้ใช้?')) return;
+      try {
+        await api(`/admin/users/${userId}`, { method: 'DELETE' });
+        showToast('ลบผู้ใช้สำเร็จ', 'success');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Search functionality
+    document.getElementById('searchUser').addEventListener('keyup', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allUsers.filter(u => 
+        u.name.toLowerCase().includes(query) || 
+        u.email.toLowerCase().includes(query) ||
+        u.phone?.toLowerCase().includes(query)
+      );
+      renderUsersTable(filtered);
+    });
+
+    loadUsers();
+  </script>
+  <style>
+    .badge { padding:4px 8px; border-radius:2px; font-size:12px; font-weight:600; }
+    .badge-pending { background:#ffc107; color:#333; }
+    .badge-approved { background:#28a745; color:#fff; }
+    .badge-rejected { background:#dc3545; color:#fff; }
+    .badge-not_submitted { background:#999; color:#fff; }
+  </style>
+</body>
+</html>

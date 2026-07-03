@@ -1,0 +1,14 @@
+[
+  { "id": "cat1", "name": "โทรศัพท์มือถือ", "icon": "📱", "slug": "mobile" },
+  { "id": "cat2", "name": "คอมพิวเตอร์", "icon": "💻", "slug": "computer" },
+  { "id": "cat3", "name": "เครื่องใช้ไฟฟ้า", "icon": "🔌", "slug": "appliance" },
+  { "id": "cat4", "name": "เสื้อผ้าผู้ชาย", "icon": "👔", "slug": "men-fashion" },
+  { "id": "cat5", "name": "เสื้อผ้าผู้หญิง", "icon": "👗", "slug": "women-fashion" },
+  { "id": "cat6", "name": "รองเท้าผู้ชาย", "icon": "👟", "slug": "men-shoes" },
+  { "id": "cat7", "name": "กระเป๋า", "icon": "👜", "slug": "bags" },
+  { "id": "cat8", "name": "เครื่องสำอาง", "icon": "💄", "slug": "beauty" },
+  { "id": "cat9", "name": "สุขภาพ", "icon": "💊", "slug": "health" },
+  { "id": "cat10", "name": "ของเล่น", "icon": "🧸", "slug": "toys" },
+  { "id": "cat11", "name": "อาหาร", "icon": "🍜", "slug": "food" },
+  { "id": "cat12", "name": "เฟอร์นิเจอร์", "icon": "🛋️", "slug": "furniture" }
+]

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการหมวดหมู่ | Shopee Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="main-content">
+      <div id="topHeader"></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <h3>หมวดหมู่สินค้า</h3>
+            <button class="btn btn-primary" onclick="openAddModal()"><i class="fas fa-plus"></i> เพิ่มหมวดหมู่</button>
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>ไอคอน</th><th>ชื่อ</th><th>Slug</th><th>จัดการ</th></tr></thead>
+              <tbody id="categoriesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="catModal">
+    <div class="modal" style="width:400px;">
+      <div class="modal-header">
+        <h3 id="catModalTitle">เพิ่มหมวดหมู่</h3>
+        <button class="modal-close" onclick="closeModal('catModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="catForm" onsubmit="saveCategory(event)">
+          <input type="hidden" id="catId">
+          <div class="form-group"><label>ชื่อหมวดหมู่</label><input type="text" id="catName" required></div>
+          <div class="form-group"><label>ไอคอน (Emoji)</label><input type="text" id="catIcon" placeholder="📱"></div>
+          <div class="form-group"><label>Slug</label><input type="text" id="catSlug" placeholder="mobile"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('catModal')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="document.getElementById('catForm').requestSubmit()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('categories');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('จัดการหมวดหมู่');
+    loadAdminUser();
+
+    async function loadCategories() {
+      const cats = await api('/categories');
+      document.getElementById('categoriesTable').innerHTML = cats.map(c => `<tr>
+        <td style="font-size:24px;">${c.icon}</td>
+        <td>${c.name}</td>
+        <td>${c.slug}</td>
+        <td><div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="editCat('${c.id}','${c.name}','${c.icon}','${c.slug}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCat('${c.id}')"><i class="fas fa-trash"></i></button>
+        </div></td>
+      </tr>`).join('');
+    }
+
+    function openAddModal() {
+      document.getElementById('catModalTitle').textContent = 'เพิ่มหมวดหมู่';
+      document.getElementById('catId').value = '';
+      document.getElementById('catForm').reset();
+      openModal('catModal');
+    }
+
+    function editCat(id, name, icon, slug) {
+      document.getElementById('catModalTitle').textContent = 'แก้ไขหมวดหมู่';
+      document.getElementById('catId').value = id;
+      document.getElementById('catName').value = name;
+      document.getElementById('catIcon').value = icon;
+      document.getElementById('catSlug').value = slug;
+      openModal('catModal');
+    }
+
+    async function saveCategory(e) {
+      e.preventDefault();
+      const id = document.getElementById('catId').value;
+      const body = {
+        name: document.getElementById('catName').value,
+        icon: document.getElementById('catIcon').value || '📦',
+        slug: document.getElementById('catSlug').value || document.getElementById('catName').value.toLowerCase().replace(/\s+/g, '-')
+      };
+      if (id) await api('/categories/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/categories', { method: 'POST', body: JSON.stringify(body) });
+      closeModal('catModal');
+      showToast('บันทึกสำเร็จ', 'success');
+      loadCategories();
+    }
+
+    async function deleteCat(id) {
+      if (!confirm('ต้องการลบหมวดหมู่นี้?')) return;
+      await api('/categories/' + id, { method: 'DELETE' });
+      showToast('ลบสำเร็จ', 'success');
+      loadCategories();
+    }
+
+    loadCategories();
+  </script>
+</body>
+</html>

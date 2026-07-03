@@ -1,0 +1,24 @@
+[
+  {
+    "id": "52f77171-a317-4d14-a293-14690a60e2eb",
+    "userId": "user1",
+    "type": "refund",
+    "amount": 10,
+    "description": "คืนเงินจากแอดมิน",
+    "adminId": "user1",
+    "adminName": "Admin Shopee",
+    "status": "completed",
+    "createdAt": "2026-07-03T12:05:31.015Z"
+  },
+  {
+    "id": "2592d806-7d6c-4198-bfdd-dc6778dca09f",
+    "userId": "user1",
+    "type": "refund",
+    "amount": 1000,
+    "description": "คืนเงินจากแอดมิน",
+    "adminId": "user1",
+    "adminName": "Admin Shopee",
+    "status": "completed",
+    "createdAt": "2026-07-03T12:05:48.262Z"
+  }
+]

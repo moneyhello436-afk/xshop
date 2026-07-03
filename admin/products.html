@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการสินค้า | Shopee Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="main-content">
+      <div id="topHeader"></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <h3>รายการสินค้า</h3>
+            <button class="btn btn-primary" onclick="openAddModal()"><i class="fas fa-plus"></i> เพิ่มสินค้า</button>
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>รูป</th><th>ชื่อสินค้า</th><th>ราคา</th><th>สต็อก</th><th>ขายแล้ว</th><th>Flash Sale</th><th>จัดการ</th></tr></thead>
+              <tbody id="productsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">เพิ่มสินค้า</h3>
+        <button class="modal-close" onclick="closeModal('productModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm" onsubmit="saveProduct(event)">
+          <input type="hidden" id="productId">
+          <div class="form-grid">
+            <div class="form-group full"><label>ชื่อสินค้า</label><input type="text" id="pName" required></div>
+            <div class="form-group full"><label>รายละเอียด</label><textarea id="pDesc"></textarea></div>
+            <div class="form-group"><label>ราคา (฿)</label><input type="number" id="pPrice" required min="0"></div>
+            <div class="form-group"><label>ราคาเดิม (฿)</label><input type="number" id="pOriginalPrice" min="0"></div>
+            <div class="form-group"><label>สต็อก</label><input type="number" id="pStock" required min="0" value="100"></div>
+            <div class="form-group"><label>ส่วนลด (%)</label><input type="number" id="pDiscount" min="0" max="100" value="0"></div>
+            <div class="form-group"><label>หมวดหมู่</label><select id="pCategory"></select></div>
+            <div class="form-group"><label>ชื่อร้าน</label><input type="text" id="pShopName" value="Shopee Mall"></div>
+            <div class="form-group full"><label>URL รูปภาพ</label><input type="url" id="pImage" placeholder="https://..."></div>
+            <div class="form-group"><label class="form-check"><input type="checkbox" id="pFlashSale"> Flash Sale</label></div>
+            <div class="form-group"><label class="form-check"><input type="checkbox" id="pFreeShipping" checked> ส่งฟรี</label></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('productModal')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="document.getElementById('productForm').requestSubmit()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('products');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('จัดการสินค้า');
+    loadAdminUser();
+
+    let categories = [];
+
+    async function loadCategories() {
+      categories = await api('/categories');
+      document.getElementById('pCategory').innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    async function loadProducts() {
+      const data = await api('/products?limit=100');
+      document.getElementById('productsTable').innerHTML = data.products.map(p => `<tr>
+        <td><img src="${p.images[0]}" class="product-thumb"></td>
+        <td>${p.name.substring(0, 40)}${p.name.length > 40 ? '...' : ''}</td>
+        <td>${formatPrice(p.price)}</td>
+        <td>${p.stock}</td>
+        <td>${p.sold}</td>
+        <td>${p.flashSale ? '⚡' : '-'}</td>
+        <td><div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
+        </div></td>
+      </tr>`).join('');
+    }
+
+    function openAddModal() {
+      document.getElementById('modalTitle').textContent = 'เพิ่มสินค้า';
+      document.getElementById('productId').value = '';
+      document.getElementById('productForm').reset();
+      openModal('productModal');
+    }
+
+    async function editProduct(id) {
+      const p = await api('/products/' + id);
+      document.getElementById('modalTitle').textContent = 'แก้ไขสินค้า';
+      document.getElementById('productId').value = p.id;
+      document.getElementById('pName').value = p.name;
+      document.getElementById('pDesc').value = p.description || '';
+      document.getElementById('pPrice').value = p.price;
+      document.getElementById('pOriginalPrice').value = p.originalPrice || '';
+      document.getElementById('pStock').value = p.stock;
+      document.getElementById('pDiscount').value = p.discount || 0;
+      document.getElementById('pCategory').value = p.categoryId;
+      document.getElementById('pShopName').value = p.shopName;
+      document.getElementById('pImage').value = p.images[0] || '';
+      document.getElementById('pFlashSale').checked = p.flashSale;
+      document.getElementById('pFreeShipping').checked = p.freeShipping;
+      openModal('productModal');
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('productId').value;
+      const body = {
+        name: document.getElementById('pName').value,
+        description: document.getElementById('pDesc').value,
+        price: parseFloat(document.getElementById('pPrice').value),
+        originalPrice: parseFloat(document.getElementById('pOriginalPrice').value) || null,
+        stock: parseInt(document.getElementById('pStock').value),
+        discount: parseInt(document.getElementById('pDiscount').value) || 0,
+        categoryId: document.getElementById('pCategory').value,
+        shopName: document.getElementById('pShopName').value,
+        shopId: 'shop_' + Date.now(),
+        images: [document.getElementById('pImage').value || 'https://via.placeholder.com/400'],
+        variants: [],
+        flashSale: document.getElementById('pFlashSale').checked,
+        freeShipping: document.getElementById('pFreeShipping').checked,
+        rating: 4.5
+      };
+      try {
+        if (id) await api('/products/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        else await api('/products', { method: 'POST', body: JSON.stringify(body) });
+        closeModal('productModal');
+        showToast('บันทึกสำเร็จ', 'success');
+        loadProducts();
+      } catch (err) { showToast(err.message); }
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('ต้องการลบสินค้านี้?')) return;
+      await api('/products/' + id, { method: 'DELETE' });
+      showToast('ลบสำเร็จ', 'success');
+      loadProducts();
+    }
+
+    loadCategories();
+    loadProducts();
+  </script>
+</body>
+</html>

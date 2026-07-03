@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ชำระเงิน | Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="header"></div>
+  <main class="container" style="padding:20px 15px;">
+    <h2 style="margin-bottom:16px;font-weight:500;">ชำระเงิน</h2>
+    <div class="checkout-grid" id="checkoutContent"></div>
+  </main>
+  <div id="footer"></div>
+  <div id="authModalArea"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('header').innerHTML = getHeaderHTML();
+    document.getElementById('footer').innerHTML = getFooterHTML();
+    document.getElementById('authModalArea').innerHTML = getAuthModalHTML();
+    updateUserUI();
+
+    let paymentMethod = 'cod';
+    let cartProducts = [];
+
+    async function init() {
+      if (!state.user) { openAuthModal(); return; }
+      if (!state.cart.length) { location.href = SHOPEE.cart; return; }
+
+      cartProducts = await Promise.all(state.cart.map(item => api('/products/' + item.productId)));
+      renderCheckout();
+    }
+
+    function renderCheckout() {
+      let subtotal = 0;
+      const itemsHTML = state.cart.map((item, idx) => {
+        const p = cartProducts[idx];
+        subtotal += p.price * item.quantity;
+        return `
+          <div class="order-item-row">
+            <img src="${p.images[0]}" alt="">
+            <div style="flex:1;">
+              <div style="font-size:14px;">${p.name}</div>
+              <div style="font-size:13px;color:var(--text-secondary);">x${item.quantity}</div>
+            </div>
+            <div style="color:var(--shopee-orange);">${formatPrice(p.price * item.quantity)}</div>
+          </div>`;
+      }).join('');
+
+      const shipping = subtotal >= 500 ? 0 : 39;
+      const grandTotal = subtotal + shipping;
+
+      document.getElementById('checkoutContent').innerHTML = `
+        <div>
+          <div class="checkout-section">
+            <h3><i class="fas fa-map-marker-alt"></i> ที่อยู่จัดส่ง</h3>
+            <div class="address-card">
+              <div style="font-weight:500;margin-bottom:4px;">${state.user.name} | ${state.user.phone || 'ไม่ระบุ'}</div>
+              <div style="font-size:14px;color:var(--text-secondary);">${state.user.address || '456 Sukhumvit Rd, Bangkok'}</div>
+            </div>
+          </div>
+          <div class="checkout-section">
+            <h3><i class="fas fa-box"></i> สินค้า</h3>
+            ${itemsHTML}
+          </div>
+          <div class="checkout-section">
+            <h3><i class="fas fa-credit-card"></i> วิธีการชำระเงิน</h3>
+            <div class="payment-option active" onclick="selectPayment('cod', this)">
+              <input type="radio" name="payment" checked> 💵 เก็บเงินปลายทาง (COD)
+            </div>
+            <div class="payment-option" onclick="selectPayment('shopeepay', this)">
+              <input type="radio" name="payment"> 📱 ShopeePay
+            </div>
+            <div class="payment-option" onclick="selectPayment('bank', this)">
+              <input type="radio" name="payment"> 🏦 โอนผ่านธนาคาร
+            </div>
+            <div class="payment-option" onclick="selectPayment('credit', this)">
+              <input type="radio" name="payment"> 💳 บัตรเครดิต/เดบิต
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="checkout-section">
+            <h3>สรุปคำสั่งซื้อ</h3>
+            <div class="order-summary-row"><span>ยอดรวมสินค้า</span><span>${formatPrice(subtotal)}</span></div>
+            <div class="order-summary-row"><span>ค่าจัดส่ง</span><span>${shipping === 0 ? 'ฟรี' : formatPrice(shipping)}</span></div>
+            <div class="order-summary-row total"><span>ยอดชำระทั้งหมด</span><span class="price">${formatPrice(grandTotal)}</span></div>
+            <button class="btn btn-primary btn-block" style="margin-top:16px;padding:14px;" onclick="placeOrder()">สั่งสินค้า</button>
+          </div>
+        </div>`;
+    }
+
+    function selectPayment(method, el) {
+      paymentMethod = method;
+      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    async function placeOrder() {
+      try {
+        const items = state.cart.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          variants: item.variants
+        }));
+        const order = await api('/orders', {
+          method: 'POST',
+          body: JSON.stringify({
+            items,
+            shippingAddress: state.user.address || '456 Sukhumvit Rd, Bangkok',
+            paymentMethod
+          })
+        });
+        state.cart = [];
+        saveCart();
+        showToast('สั่งซื้อสำเร็จ!', 'success');
+        setTimeout(() => location.href = SHOPEE.orders, 1500);
+      } catch (err) {
+        showToast(err.message);
+      }
+    }
+
+    checkAuth().then(init);
+  </script>
+</body>
+</html>

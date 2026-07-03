@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการผู้ใช้ | Shopee Admin</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+
+<div class="admin-layout">
+
+    <div id="sidebar"></div>
+
+    <div class="admin-content">
+
+        <div id="topHeader"></div>
+
+        <div class="admin-main">
+
+            <div class="content-section">
+
+                <div class="section-header">
+                    <h2>จัดการผู้ใช้</h2>
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>ชื่อ</th>
+                                <th>Username</th>
+                                <th>อีเมล</th>
+                                <th>เบอร์โทร</th>
+                                <th>Role</th>
+                                <th>วันที่สมัคร</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="usersTable"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/database.js"></script>
+<script src="js/admin.js"></script>
+
+<script>
+
+if (!checkAdminAuth()) {
+    window.location.href = "login.html";
+}
+
+document.getElementById("sidebar").innerHTML =
+    getSidebarHTML("users");
+
+document.getElementById("topHeader").innerHTML =
+    getTopHeaderHTML("จัดการผู้ใช้");
+
+loadAdminUser();
+
+async function loadUsers(){
+
+    try{
+
+        const users = await api("/users");
+
+        document.getElementById("usersTable").innerHTML =
+        users.map(u=>`
+
+            <tr>
+
+                <td>
+
+                    <div style="display:flex;align-items:center;gap:10px;">
+
+                        <div class="user-avatar">
+
+                            ${u.name.charAt(0).toUpperCase()}
+
+                        </div>
+
+                        ${u.name}
+
+                    </div>
+
+                </td>
+
+                <td>${u.username}</td>
+
+                <td>${u.email}</td>
+
+                <td>${u.phone || "-"}</td>
+
+                <td>
+
+                    <span class="badge ${u.role==="admin"?"badge-approved":"badge-pending"}">
+
+                        ${u.role}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    ${new Date(u.createdAt).toLocaleDateString("th-TH")}
+
+                </td>
+
+            </tr>
+
+        `).join("");
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+        document.getElementById("usersTable").innerHTML=`
+
+        <tr>
+
+            <td colspan="6" style="text-align:center;padding:30px;">
+
+                โหลดข้อมูลไม่สำเร็จ
+
+            </td>
+
+        </tr>
+
+        `;
+
+    }
+
+}
+
+loadUsers();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet Transactions | Admin Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="admin-content">
+      <div id="topHeader"></div>
+      <div class="admin-main">
+        <div class="content-section">
+          <div class="section-header">
+            <h2>ประวัติเทรนแซกชัน</h2>
+            <div>
+              <select id="filterType" onchange="filterTransactions()" style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;margin-right:8px;">
+                <option value="">ทุกประเภท</option>
+                <option value="topup">เติมเงิน</option>
+                <option value="withdraw">ถอนเงิน</option>
+                <option value="admin_topup">เติมจากแอดมิน</option>
+                <option value="refund">คืนเงิน</option>
+              </select>
+              <input type="text" id="searchTransaction" placeholder="ค้นหา..." style="padding:8px 12px;border:1px solid #ddd;border-radius:4px;width:200px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div class="stat-card">
+              <div class="stat-label">เติมเงินทั้งหมด</div>
+              <div class="stat-value" id="totalTopup">฿0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">ถอนเงินทั้งหมด</div>
+              <div class="stat-value" id="totalWithdraw">฿0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">คืนเงินทั้งหมด</div>
+              <div class="stat-value" id="totalRefund">฿0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">รายการทั้งหมด</div>
+              <div class="stat-value" id="totalCount">0</div>
+            </div>
+          </div>
+
+          <div id="transactionsTableContainer" class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>วันที่/เวลา</th>
+                  <th>ผู้ใช้</th>
+                  <th>ประเภท</th>
+                  <th>จำนวนเงิน</th>
+                  <th>คำอธิบาย</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="transactionsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('wallet');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('Wallet Transactions');
+    loadAdminUser();
+
+    let allTransactions = [];
+
+    async function loadTransactions() {
+      try {
+        allTransactions = await api('/admin/transactions');
+        renderTransactionsTable(allTransactions);
+        updateStats();
+      } catch (err) {
+        showToast('Error loading transactions: ' + err.message, 'error');
+      }
+    }
+
+    function renderTransactionsTable(data) {
+      const tbody = document.getElementById('transactionsTable');
+      tbody.innerHTML = data.map(t => `
+        <tr>
+          <td>${new Date(t.createdAt).toLocaleString('th-TH')}</td>
+          <td>${t.userName || 'Unknown'}</td>
+          <td><span class="badge badge-${t.type}">${getTypeLabel(t.type)}</span></td>
+          <td><strong>฿${t.amount.toLocaleString('en', {minimumFractionDigits: 2})}</strong></td>
+          <td>${t.description}</td>
+          <td><span class="badge badge-${t.status}">${getStatusLabel(t.status)}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function getTypeLabel(type) {
+      const labels = {
+        'topup': 'เติมเงิน',
+        'withdraw': 'ถอนเงิน',
+        'admin_topup': 'เติมจากแอดมิน',
+        'refund': 'คืนเงิน'
+      };
+      return labels[type] || type;
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        'completed': 'สำเร็จ',
+        'pending': 'รอตรวจสอบ',
+        'rejected': 'ปฏิเสธ'
+      };
+      return labels[status] || status;
+    }
+
+    function filterTransactions() {
+      const typeFilter = document.getElementById('filterType').value;
+      const searchQuery = document.getElementById('searchTransaction').value.toLowerCase();
+      
+      const filtered = allTransactions.filter(t => {
+        const matchType = !typeFilter || t.type === typeFilter;
+        const matchSearch = !searchQuery || 
+          t.userName?.toLowerCase().includes(searchQuery) ||
+          t.userEmail?.toLowerCase().includes(searchQuery) ||
+          t.description?.toLowerCase().includes(searchQuery);
+        return matchType && matchSearch;
+      });
+      
+      renderTransactionsTable(filtered);
+      updateStats(filtered);
+    }
+
+    function updateStats(data = allTransactions) {
+      const totalTopup = data.filter(t => t.type === 'topup' || t.type === 'admin_topup').reduce((s, t) => s + t.amount, 0);
+      const totalWithdraw = data.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+      const totalRefund = data.filter(t => t.type === 'refund').reduce((s, t) => s + t.amount, 0);
+      
+      document.getElementById('totalTopup').textContent = '฿' + totalTopup.toLocaleString('en', {minimumFractionDigits: 0});
+      document.getElementById('totalWithdraw').textContent = '฿' + totalWithdraw.toLocaleString('en', {minimumFractionDigits: 0});
+      document.getElementById('totalRefund').textContent = '฿' + totalRefund.toLocaleString('en', {minimumFractionDigits: 0});
+      document.getElementById('totalCount').textContent = data.length;
+    }
+
+    // Real-time search
+    document.getElementById('searchTransaction').addEventListener('keyup', filterTransactions);
+    document.getElementById('filterType').addEventListener('change', filterTransactions);
+
+    loadTransactions();
+    // Refresh every 10 seconds
+    setInterval(loadTransactions, 10000);
+  </script>
+  <style>
+    .stat-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 4px;
+      border-left: 4px solid var(--primary);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .badge { padding:4px 8px; border-radius:2px; font-size:12px; font-weight:600; }
+    .badge-topup { background:#e3f2fd; color:#1976d2; }
+    .badge-withdraw { background:#fff3e0; color:#f57c00; }
+    .badge-admin_topup { background:#e8f5e9; color:#388e3c; }
+    .badge-refund { background:#fce4ec; color:#c2185b; }
+    .badge-completed { background:#c8e6c9; color:#2e7d32; }
+    .badge-pending { background:#fff9c4; color:#f57f17; }
+  </style>
+</body>
+</html>

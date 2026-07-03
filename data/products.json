@@ -1,0 +1,270 @@
+[
+  {
+    "id": "prod3",
+    "name": "MacBook Air M3 13 นิ้ว 8GB/256GB",
+    "description": "MacBook Air ชิป M3 แบattery 18 ชม. จอ Liquid Retina 13.6 นิ้ว น้ำหนักเบา 1.24 กก.",
+    "price": 39900,
+    "originalPrice": 42900,
+    "discount": 7,
+    "categoryId": "cat2",
+    "shopName": "Apple Official Store",
+    "shopId": "shop_1783089804473",
+    "rating": 4.5,
+    "sold": 560,
+    "stock": 20,
+    "images": [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "createdAt": "2026-02-01T00:00:00.000Z"
+  },
+  {
+    "id": "prod4",
+    "name": "เสื้อโปโลผู้ชาย Premium Cotton",
+    "description": "เสื้อโปโลผ้าคotton 100% ใส่สบาย ระบายอากาศดี ไม่ยับง่าย",
+    "price": 299,
+    "originalPrice": 599,
+    "discount": 50,
+    "categoryId": "cat4",
+    "shopName": "Fashion Hub TH",
+    "shopId": "shop3",
+    "rating": 4.7,
+    "sold": 3200,
+    "stock": 200,
+    "images": [
+      "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=400"
+    ],
+    "variants": [
+      {
+        "name": "สี",
+        "options": [
+          "ขาว",
+          "ดำ",
+          "นavy",
+          "เทา"
+        ]
+      },
+      {
+        "name": "ไซส์",
+        "options": [
+          "S",
+          "M",
+          "L",
+          "XL",
+          "XXL"
+        ]
+      }
+    ],
+    "flashSale": true,
+    "freeShipping": false,
+    "createdAt": "2026-02-10T00:00:00.000Z"
+  },
+  {
+    "id": "prod5",
+    "name": "กระเป๋าสะพายข้าง Luxury Leather",
+    "description": "กระเป๋าหนังแท้ ดีไซน์หรูหรา หลายช่องใส่ของ สายสะพายปรับได้",
+    "price": 1290,
+    "originalPrice": 2590,
+    "discount": 50,
+    "categoryId": "cat7",
+    "shopName": "Bag Paradise",
+    "shopId": "shop4",
+    "rating": 4.6,
+    "sold": 781,
+    "stock": 44,
+    "images": [
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400"
+    ],
+    "variants": [
+      {
+        "name": "สี",
+        "options": [
+          "ดำ",
+          "น้ำตาล",
+          "แดง"
+        ]
+      }
+    ],
+    "flashSale": true,
+    "freeShipping": true,
+    "createdAt": "2026-02-15T00:00:00.000Z"
+  },
+  {
+    "id": "prod6",
+    "name": "รองเท้าผ้าใบ Nike Air Max 90",
+    "description": "รองเท้า Nike Air Max 90 สไตล์คลาสสิก สวมใส่สบาย รองรับแรงกระแทกดี",
+    "price": 3490,
+    "originalPrice": 4990,
+    "discount": 30,
+    "categoryId": "cat6",
+    "shopName": "Sneaker World",
+    "shopId": "shop5",
+    "rating": 4.8,
+    "sold": 1560,
+    "stock": 80,
+    "images": [
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+    ],
+    "variants": [
+      {
+        "name": "สี",
+        "options": [
+          "ขาว/แดง",
+          "ดำ/ขาว",
+          "เทา"
+        ]
+      },
+      {
+        "name": "ไซส์",
+        "options": [
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44"
+        ]
+      }
+    ],
+    "flashSale": false,
+    "freeShipping": true,
+    "createdAt": "2026-03-01T00:00:00.000Z"
+  },
+  {
+    "id": "prod9",
+    "name": "หูฟัง Sony WH-1000XM5 Wireless",
+    "description": "หูฟัง Noise Cancelling อันดับ 1 แบattery 30 ชม. คุณภาพเสียง Hi-Res",
+    "price": 11990,
+    "originalPrice": 13990,
+    "discount": 14,
+    "categoryId": "cat1",
+    "shopName": "Tech Gadget TH",
+    "shopId": "shop8",
+    "rating": 4.9,
+    "sold": 671,
+    "stock": 24,
+    "images": [
+      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400"
+    ],
+    "variants": [
+      {
+        "name": "สี",
+        "options": [
+          "ดำ",
+          "เงิน",
+          "นavy"
+        ]
+      }
+    ],
+    "flashSale": true,
+    "freeShipping": true,
+    "createdAt": "2026-03-15T00:00:00.000Z"
+  },
+  {
+    "id": "ac8a08b2-5b5f-4891-ac7c-8ef3f047c0b3",
+    "name": "ipohne 17promax",
+    "description": "",
+    "price": 37000,
+    "originalPrice": 36500,
+    "stock": 9,
+    "discount": 0,
+    "categoryId": "cat1",
+    "shopName": "Shopee Mall",
+    "shopId": "shop_1783070648070",
+    "images": [
+      "data:image/jpeg;base64,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"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "rating": 4.5,
+    "sold": 1,
+    "createdAt": "2026-07-03T09:24:08.091Z"
+  },
+  {
+    "id": "7c009a74-aa26-4ba5-9cb6-4cc37dc72133",
+    "name": "ลาบูบู๋ๆ",
+    "description": "ลาบูบู๋เอาไว้เด็กเล่นนะ",
+    "price": 1200,
+    "originalPrice": 1900,
+    "stock": 100,
+    "discount": 0,
+    "categoryId": "cat10",
+    "shopName": "Shopee Mall",
+    "shopId": "shop_1783086061757",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-fEdHg-11uWKmSHlg21Npjgi912jmjRnh-sGti-s2KQ&s=10"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "rating": 4.5,
+    "sold": 0,
+    "createdAt": "2026-07-03T13:41:01.787Z"
+  },
+  {
+    "id": "d67954e4-ac4b-41ad-8d15-3bced120b38f",
+    "name": "หูฟัง",
+    "description": "Onikuma B90 RGB Cat Ear Bluetooth 5.0 Headphone Wireless หูฟังแมวไร้สาย RGB ประกันศูนย์ไทย 2 ปี",
+    "price": 890,
+    "originalPrice": 899,
+    "stock": 96,
+    "discount": 0,
+    "categoryId": "cat3",
+    "shopName": "Shopee Mall",
+    "shopId": "shop_1783086510321",
+    "images": [
+      "https://aquapro.co.th/wp-content/uploads/2024/07/ok94ok95ok97-2-500x500.jpg"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "rating": 4.5,
+    "sold": 4,
+    "createdAt": "2026-07-03T13:46:38.069Z"
+  },
+  {
+    "id": "4a6b3f07-8b43-496c-90d5-cfa12fcdaf25",
+    "name": "คอม",
+    "description": "",
+    "price": 10000,
+    "originalPrice": null,
+    "stock": 98,
+    "discount": 0,
+    "categoryId": "cat1",
+    "shopName": "Shopee Mall",
+    "shopId": "shop_1783092268083",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjhS-Gv46YLT6GBiEq41IBBvscnAHTxotKu3vS0Q3Ngw&s=10"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "rating": 4.5,
+    "sold": 2,
+    "createdAt": "2026-07-03T15:24:28.086Z"
+  },
+  {
+    "id": "a07bbe50-1a0e-45be-b16d-4a9611457fdd",
+    "name": "คอม",
+    "description": "",
+    "price": 20000,
+    "originalPrice": null,
+    "stock": 100,
+    "discount": 0,
+    "categoryId": "cat2",
+    "shopName": "Shopee Mall",
+    "shopId": "shop_1783092540655",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdlQ75fjhQw0sRyp70AUn0Ie7Vsk1_VzxBCulUyU1x9w&s=10"
+    ],
+    "variants": [],
+    "flashSale": false,
+    "freeShipping": true,
+    "rating": 4.5,
+    "sold": 0,
+    "createdAt": "2026-07-03T15:29:00.659Z"
+  }
+]

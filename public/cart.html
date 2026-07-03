@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตะกร้าสินค้า | Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="header"></div>
+  <main class="container cart-page">
+    <h2 style="margin-bottom:16px;font-weight:500;">🛒 ตะกร้าสินค้า</h2>
+    <div id="cartContent"></div>
+  </main>
+  <div id="footer"></div>
+  <div id="authModalArea"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('header').innerHTML = getHeaderHTML();
+    document.getElementById('footer').innerHTML = getFooterHTML();
+    document.getElementById('authModalArea').innerHTML = getAuthModalHTML();
+    updateUserUI();
+
+    let cartProducts = [];
+
+    async function renderCart() {
+      if (!state.cart.length) {
+        document.getElementById('cartContent').innerHTML = `
+          <div class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <p style="font-size:18px;margin-bottom:8px;">ตะกร้าว่างเปล่า</p>
+            <p style="color:var(--text-secondary);margin-bottom:20px;">ยังไม่มีสินค้าในตะกร้า</p>
+            <a href="index.html" class="btn btn-primary">เลือกซื้อสินค้า</a>
+          </div>`;
+        return;
+      }
+
+      cartProducts = await Promise.all(state.cart.map(item => api('/products/' + item.productId)));
+
+      let total = 0;
+      const itemsHTML = state.cart.map((item, idx) => {
+        const p = cartProducts[idx];
+        const subtotal = p.price * item.quantity;
+        total += subtotal;
+        const variantStr = Object.entries(item.variants).map(([k,v]) => `${k}: ${v}`).join(', ');
+        return `
+          <div class="cart-item">
+            <input type="checkbox" checked>
+            <div class="cart-item-info">
+              <img src="${p.images[0]}" alt="${p.name}">
+              <div>
+                <div class="cart-item-name">${p.name}</div>
+                ${variantStr ? `<div class="cart-item-variant">${variantStr}</div>` : ''}
+              </div>
+            </div>
+            <div>${formatPrice(p.price)}</div>
+            <div>
+              <div class="quantity-control">
+                <button onclick="updateQty(${idx}, -1)">−</button>
+                <input type="number" value="${item.quantity}" min="1" max="${p.stock}" onchange="setCartQty(${idx}, this.value)">
+                <button onclick="updateQty(${idx}, 1)">+</button>
+              </div>
+            </div>
+            <div style="color:var(--shopee-orange);font-weight:500;">${formatPrice(subtotal)}</div>
+            <button onclick="removeItem(${idx})" style="background:none;color:var(--text-light);font-size:18px;"><i class="fas fa-trash"></i></button>
+          </div>`;
+      }).join('');
+
+      const shipping = total >= 500 ? 0 : 39;
+      document.getElementById('cartContent').innerHTML = `
+        <div class="cart-header">
+          <span></span><span>สินค้า</span><span>ราคาต่อชิ้น</span><span>จำนวน</span><span>ราคารวม</span><span>ลบ</span>
+        </div>
+        ${itemsHTML}
+        <div class="cart-footer">
+          <div>
+            <input type="checkbox" checked> เลือกทั้งหมด (${state.cart.length} รายการ)
+          </div>
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div class="cart-total">ยอดรวม: <span class="cart-total-price">${formatPrice(total + shipping)}</span></div>
+            <button class="btn btn-primary" style="padding:14px 48px;" onclick="goCheckout()">สั่งสินค้า</button>
+          </div>
+        </div>`;
+    }
+
+    function updateQty(idx, delta) {
+      const p = cartProducts[idx];
+      state.cart[idx].quantity = Math.max(1, Math.min(p.stock, state.cart[idx].quantity + delta));
+      saveCart();
+      renderCart();
+    }
+
+    function setCartQty(idx, val) {
+      const p = cartProducts[idx];
+      state.cart[idx].quantity = Math.max(1, Math.min(p.stock, parseInt(val) || 1));
+      saveCart();
+      renderCart();
+    }
+
+    function removeItem(idx) {
+      removeFromCart(idx);
+      renderCart();
+    }
+
+    function goCheckout() {
+      if (!state.user) { openAuthModal(); return; }
+      location.href = SHOPEE.checkout;
+    }
+
+    renderCart();
+  </script>
+</body>
+</html>

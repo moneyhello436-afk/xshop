@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายละเอียดสินค้า | Shopee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="header"></div>
+  <main class="container">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="product-detail" id="productDetail">
+      <div class="loading"><div class="spinner"></div>กำลังโหลด...</div>
+    </div>
+    <section class="products-section">
+      <div class="section-header"><h2 class="section-title">สินค้าที่เกี่ยวข้อง</h2></div>
+      <div class="products-grid" id="relatedProducts"></div>
+    </section>
+  </main>
+  <div id="footer"></div>
+  <div id="authModalArea"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('header').innerHTML = getHeaderHTML();
+    document.getElementById('footer').innerHTML = getFooterHTML();
+    document.getElementById('authModalArea').innerHTML = getAuthModalHTML();
+    updateUserUI();
+
+    const productId = new URLSearchParams(location.search).get('id');
+    let product = null;
+    let selectedVariants = {};
+    let quantity = 1;
+
+    async function loadProduct() {
+      if (!productId) { location.href = SHOPEE.home; return; }
+      product = await api('/products/' + productId);
+      selectedVariants = {};
+      (product.variants || []).forEach(v => { if (v.options.length) selectedVariants[v.name] = v.options[0]; });
+
+      document.title = product.name + ' | Shopee';
+      document.getElementById('breadcrumb').innerHTML = `<a href="${SHOPEE.home}">Shopee</a> › <a href="${SHOPEE.category(product.categoryId)}">หมวดหมู่</a> › ${product.name.substring(0, 40)}...`;
+
+      renderProduct();
+      loadRelated();
+    }
+
+    function renderProduct() {
+      const variantsHTML = (product.variants || []).map(v => `
+        <div class="variant-group">
+          <div class="variant-label">${v.name}</div>
+          <div class="variant-options">
+            ${v.options.map(o => `
+              <button class="variant-btn ${selectedVariants[v.name] === o ? 'active' : ''}"
+                onclick="selectVariant('${v.name}','${o}')">${o}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('productDetail').innerHTML = `
+        <div class="product-detail-grid">
+          <div>
+            <div class="product-gallery-main">
+              <img id="mainImage" src="${product.images[0]}" alt="${product.name}">
+            </div>
+            <div class="product-gallery-thumbs">
+              ${product.images.map((img, i) => `
+                <img src="${img}" class="${i===0?'active':''}" onclick="changeImage('${img}', this)">
+              `).join('')}
+            </div>
+          </div>
+          <div class="product-info">
+            <h1>${product.name}</h1>
+            <div class="product-meta-row">
+              <span class="product-rating-big">★ ${product.rating}</span>
+              <span class="product-sold">${product.sold} ขายแล้ว</span>
+              <span>รายงานสินค้า</span>
+            </div>
+            <div class="product-price-box">
+              <span class="product-price-big">${formatPrice(product.price)}</span>
+              ${product.originalPrice ? `<span class="product-price-old">${formatPrice(product.originalPrice)}</span>` : ''}
+              ${product.discount ? `<span class="product-discount-tag">-${product.discount}%</span>` : ''}
+            </div>
+            ${variantsHTML}
+            <div class="quantity-group">
+              <span class="variant-label">จำนวน</span>
+              <div class="quantity-control">
+                <button onclick="changeQty(-1)">−</button>
+                <input type="number" id="qtyInput" value="1" min="1" max="${product.stock}" onchange="setQty(this.value)">
+                <button onclick="changeQty(1)">+</button>
+              </div>
+              <span class="stock-info">${product.stock} ชิ้นพร้อมส่ง</span>
+            </div>
+            <div class="product-actions">
+              <button class="btn btn-outline" onclick="buyNow()"><i class="fas fa-shopping-bag"></i> ซื้อเลย</button>
+              <button class="btn btn-primary" onclick="addItem()"><i class="fas fa-cart-plus"></i> เพิ่มลงตะกร้า</button>
+            </div>
+            <div class="shop-info-box">
+              <div class="shop-avatar"><i class="fas fa-store"></i></div>
+              <div>
+                <div class="shop-name">${product.shopName}</div>
+                <div class="shop-label">ร้านค้าออนไลน์</div>
+              </div>
+              <button class="btn btn-outline" style="margin-left:auto;padding:8px 20px;">แชท</button>
+              <button class="btn btn-outline" style="padding:8px 20px;">ดูร้านค้า</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border-color);">
+          <h3 style="font-size:16px;margin-bottom:12px;">รายละเอียดสินค้า</h3>
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.8;">${product.description}</p>
+        </div>`;
+    }
+
+    function changeImage(src, el) {
+      document.getElementById('mainImage').src = src;
+      document.querySelectorAll('.product-gallery-thumbs img').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function selectVariant(name, option) {
+      selectedVariants[name] = option;
+      renderProduct();
+      document.getElementById('qtyInput').value = quantity;
+    }
+
+    function changeQty(delta) {
+      quantity = Math.max(1, Math.min(product.stock, quantity + delta));
+      document.getElementById('qtyInput').value = quantity;
+    }
+
+    function setQty(val) {
+      quantity = Math.max(1, Math.min(product.stock, parseInt(val) || 1));
+      document.getElementById('qtyInput').value = quantity;
+    }
+
+    function addItem() {
+      addToCart(product.id, quantity, { ...selectedVariants });
+    }
+
+    function buyNow() {
+      addToCart(product.id, quantity, { ...selectedVariants });
+      location.href = SHOPEE.cart;
+    }
+
+    async function loadRelated() {
+      const data = await api('/products?category=' + product.categoryId + '&limit=5');
+      document.getElementById('relatedProducts').innerHTML = data.products
+        .filter(p => p.id !== product.id)
+        .slice(0, 5)
+        .map(p => renderProductCard(p)).join('');
+    }
+
+    loadProduct();
+  </script>
+</body>
+</html>

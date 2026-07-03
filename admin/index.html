@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Shopee Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="main-content">
+      <div id="topHeader"></div>
+      <div class="page-content">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card orange"><div class="icon"><i class="fas fa-box"></i></div><div class="label">สินค้าทั้งหมด</div><div class="value" id="statProducts">-</div></div>
+          <div class="stat-card blue"><div class="icon"><i class="fas fa-shopping-bag"></i></div><div class="label">คำสั่งซื้อ</div><div class="value" id="statOrders">-</div></div>
+          <div class="stat-card green"><div class="icon"><i class="fas fa-users"></i></div><div class="label">ลูกค้า</div><div class="value" id="statUsers">-</div></div>
+          <div class="stat-card yellow"><div class="icon"><i class="fas fa-coins"></i></div><div class="label">รายได้รวม</div><div class="value" id="statRevenue">-</div></div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header"><h3>คำสั่งซื้อล่าสุด</h3><a href="orders.html" class="btn btn-outline btn-sm">ดูทั้งหมด</a></div>
+            <div class="card-body"><table><thead><tr><th>รหัส</th><th>ลูกค้า</th><th>ยอดรวม</th><th>สถานะ</th></tr></thead><tbody id="recentOrders"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>สินค้าขายดี</h3><a href="products.html" class="btn btn-outline btn-sm">ดูทั้งหมด</a></div>
+            <div class="card-body"><table><thead><tr><th>สินค้า</th><th>ราคา</th><th>ขายแล้ว</th></tr></thead><tbody id="topProducts"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('dashboard');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('Dashboard');
+    loadAdminUser();
+
+    async function loadDashboard() {
+      const data = await api('/dashboard');
+      document.getElementById('statProducts').textContent = data.totalProducts;
+      document.getElementById('statOrders').textContent = data.totalOrders;
+      document.getElementById('statUsers').textContent = data.totalUsers;
+      document.getElementById('statRevenue').textContent = formatPrice(data.totalRevenue);
+
+      document.getElementById('recentOrders').innerHTML = data.recentOrders.length
+        ? data.recentOrders.map(o => `<tr>
+            <td>${o.id}</td><td>${o.userName}</td>
+            <td>${formatPrice(o.grandTotal)}</td>
+            <td>${renderStatusBadge(o.status)}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="4" class="empty-state">ยังไม่มีคำสั่งซื้อ</td></tr>';
+
+      document.getElementById('topProducts').innerHTML = data.topProducts.map(p => `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px;">
+          <img src="${p.images[0]}" class="product-thumb">${p.name.substring(0,30)}...
+        </div></td>
+        <td>${formatPrice(p.price)}</td><td>${p.sold}</td>
+      </tr>`).join('');
+    }
+    loadDashboard();
+  </script>
+</body>
+</html>

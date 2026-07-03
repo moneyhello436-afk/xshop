@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการคำสั่งซื้อ | Shopee Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div id="sidebar"></div>
+    <div class="main-content">
+      <div id="topHeader"></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header"><h3>รายการคำสั่งซื้อ</h3></div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>รหัส</th><th>ลูกค้า</th><th>สินค้า</th><th>ยอดรวม</th><th>ชำระเงิน</th><th>สถานะ</th><th>วันที่</th><th>จัดการ</th></tr></thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/config.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (!checkAdminAuth()) throw '';
+    document.getElementById('sidebar').innerHTML = getSidebarHTML('orders');
+    document.getElementById('topHeader').innerHTML = getTopHeaderHTML('จัดการคำสั่งซื้อ');
+    loadAdminUser();
+
+    async function loadOrders() {
+      const orders = await api('/orders');
+      document.getElementById('ordersTable').innerHTML = orders.length ? orders.map(o => `<tr>
+        <td><strong>${o.id}</strong></td>
+        <td>${o.userName}</td>
+        <td>${o.items.length} รายการ</td>
+        <td>${formatPrice(o.grandTotal)}</td>
+        <td>${o.paymentMethod.toUpperCase()}</td>
+        <td>${renderStatusBadge(o.status)}</td>
+        <td>${new Date(o.createdAt).toLocaleDateString('th-TH')}</td>
+        <td>
+          <select onchange="updateStatus('${o.id}', this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+            ${['pending','confirmed','shipping','delivered','cancelled'].map(s =>
+              `<option value="${s}" ${o.status===s?'selected':''}>${statusMap[s].label}</option>`
+            ).join('')}
+          </select>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="8" class="empty-state">ยังไม่มีคำสั่งซื้อ</td></tr>';
+    }
+
+    async function updateStatus(id, status) {
+      await api('/orders/' + id + '/status', { method: 'PUT', body: JSON.stringify({ status }) });
+      showToast('อัปเดตสถานะแล้ว', 'success');
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
